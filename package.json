@@ -1,0 +1,13 @@
+{
+  "name": "flask-bootstrap-starter",
+  "version": "1.0.0",
+  "description": "A Flask application that serves an HTML file styled with locally installed Bootstrap.",
+  "main": "app.py",
+  "scripts": {
+    "sass-dev": "sass --load-path=node_modules --watch --update --style=expanded static/scss:static/css",
+    "sass-prod": "sass --load-path=node_modules --no-source-map --style=compressed static/scss:static/css"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.3"
+  }
+}
