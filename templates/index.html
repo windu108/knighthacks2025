@@ -270,11 +270,6 @@
                     dayCell.dataset.dayIndex = day;  // Data attribute for day (0=Mon, 6=Sun)
                     dayCell.textContent = ' '; // Empty content, just for display/clicking
 
-                    // Add click listener to toggle selection
-                    dayCell.addEventListener('click', function () {
-                        this.classList.toggle('selected');
-                    });
-
                     row.appendChild(dayCell);
                 }
 
