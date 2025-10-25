@@ -14,14 +14,6 @@ activities = []
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = 'your_random_secret_key_here' 
-
-@app.route('/node_modules/<path:filename>')
-def node_modules(filename):
-    return send_from_directory(
-        os.path.join(app.root_path, 'node_modules'), filename
-    )
-
-
 @app.route('/', methods=['GET'])
 def index():
     now = datetime.now()
