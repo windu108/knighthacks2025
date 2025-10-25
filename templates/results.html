@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Results</title>
+</head>
+<body>
+    <h1>Voting Results</h1>
+
+    <!-- Loop through the sorted activities list -->
+    <ol>
+    {% for activity in activities %}
+        <li>
+            <strong>{{ activity.name }}</strong>: {{ activity.votes }} votes
+        </li>
+    {% else %}
+        <li>No votes have been cast.</li>
+    {% endfor %}
+    </ol>
+    
+    <br>
+    <p><a href="/home">Back to voting</a></p>
+</body>
+</html>
+
