@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en" data-bs-theme="dark">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Meeting/Activity App</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+{% block title %}Live Data Dashboard{% endblock %}
+
+{% block head %}
+
 
     <style>
         /* Styling for the calendar cells */
@@ -42,16 +40,10 @@
             /* Ensure text is readable */
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <nav class="navbar sticky-top bg-body-tertiary border-bottom border-primary border-3">
-        <div class="container-fluid">
-            <div class="col-4 justify-content-start">
-                <a class="navbar-brand" href="/">Meeting App</a>
-            </div>
-        </div>
-    </nav>
+{% block content %}
+    
 
     <div class="container mt-4">
         <h2 class="text-center mb-4">Profile & Activity Finder</h2>
@@ -314,6 +306,4 @@
             document.addEventListener("dragstart", e => e.preventDefault());
         });
     </script>
-</body>
-
-</html>
+{% endblock %}
