@@ -185,7 +185,6 @@
         const suffix = hour >= 12 ? "PM" : "AM";
         const displayHour = hour % 12 === 0 ? 12 : hour % 12;
         timeCell.textContent = `${displayHour}:00 ${suffix}`;
-        timeCell.classList.add('table-secondary'); // Style the time column
         row.appendChild(timeCell);
 
         // Create 7 cells for days (Mon-Sun)
