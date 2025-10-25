@@ -35,25 +35,47 @@
   </div>
 
   <div class="container">
-    <h2 class="text-center mb-4"> Profile </h2>
+    <div class="row g-4">
+      <h2 class="text-center mb-4"> Profile </h2>
 
-    <!-- Location Input -->
-    <div class="mb-3">
-      <label for="locationInput" class="form-label">Location</label>
-      <input type="text" class="form-control" id="locationInput" placeholder="Enter your current location">
-    </div>
+      <div class="col-md-4">
+        <!-- Location Input -->
+        <div class="mb-3">
+          <label for="locationInput" class="form-label">Location</label>
+          <input type="text" class="form-control" id="locationInput" placeholder="Enter your current location">
+        </div>
 
-    <!-- LBudget Input -->
-    <div class="mb-3">
-      <label for="budgetInput" class="form-label">Budget</label>
-      <input type="text" class="form-control" id="budgetInput" placeholder="Enter your budget? ">
-    </div>
+        <!-- Budget Input -->
+        <div class="mb-3">
+          <label for="budgetInput" class="form-label">Budget</label>
+          <input type="text" class="form-control" id="budgetInput" placeholder="Enter your budget? ">
+        </div>
+      </div>
 
-    <!-- Output -->
-    <div class="mt-4">
-      <div class="box output-box p-3 border rounded">
-        <h5>Output:</h5>
-        <div id="outputText" class="mt-2 text-secondary">Waiting for input...</div>
+      <div class="col-md-8">
+          <!-- Calendar -->
+        <div class="card p-3 shadow-sm">
+          <h3 class="mb-3">Availability Calendar</h3>
+
+          <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle" id="calendarTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Time</th>
+                  <th>Mon</th>
+                  <th>Tue</th>
+                  <th>Wed</th>
+                  <th>Thu</th>
+                  <th>Fri</th>
+                  <th>Sat</th>
+                  <th>Sun</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -62,27 +84,11 @@
       <button id="submitBtn" class="btn btn-primary">Submit Data to Python Backend</button>
     </div>
 
-    <!-- Calendar -->
-    <div class="container mt-5">
-      <h3 class="text-center mb-4">Simple Availability Calendar</h3>
-
-      <div class="table-responsive">
-        <table class="table table-bordered text-center align-middle" id="calendarTable">
-          <thead class="table-dark">
-            <tr>
-              <th>Time</th>
-              <th>Mon</th>
-              <th>Tue</th>
-              <th>Wed</th>
-              <th>Thu</th>
-              <th>Fri</th>
-              <th>Sat</th>
-              <th>Sun</th>
-            </tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
+    <!-- Output -->
+    <div class="mt-4">
+      <div class="box output-box p-3 border rounded">
+        <h5>Output:</h5>
+        <div id="outputText" class="mt-2 text-secondary">Waiting for input...</div>
       </div>
     </div>
   </div>
