@@ -1,3 +1,8 @@
+#python3 -m pip install google-genai 
+# is required to install
+
+
+
 # API Key: AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo
 from google import genai
 
@@ -26,9 +31,6 @@ for i, response in enumerate(responses):
 # 2. Construct the final prompt string
 # ----------------------------------------------------
 prompt = f'We have multiple users who all reside in {location}. They have a budget of ${budget}. Their interests are as follows: {formatted_responses} Suggest a single activity that would be a good fit for all of them within the budget and location. Put your response in the following format: give the name of the activity in bold, then list its cost and address on the next line then finally a very short description of the activity. Give 3 options in order of most relevant to our users interest'
-
-# The resulting prompt string will be:
-# 'We have multiple users who all reside in Orlando. They have a budget of $50. Their interests are as follows: User1: (Hiking, Skydiving, Snorkling) User2: (Hiking, Themeparks) User3: (Great Food) Suggest a single activity that would be a good fit for all of them.'
 
 # ----------------------------------------------------
 # 3. Google Gemini API call
