@@ -23,10 +23,10 @@ document.getElementById("submitBtn").addEventListener("click", () => {
 
     const interests = document.getElementById("interestsInput").value;
 
-
+    const availability = collectAvailability();
 
     if (location.trim() !== "" && budget.trim() !== "" && interests.trim() !== "") {
-        const entry = {location, budget, interests}
+        const entry = { location, budget, interests, availability}
         push(entriesRef, entry);
         document.getElementById("locationInput").value = "";
         document.getElementById("budgetInput").value = "";
@@ -36,6 +36,36 @@ document.getElementById("submitBtn").addEventListener("click", () => {
 
     }
 });
+
+/**
+* Gathers all selected time slots from the calendar table.
+* @returns {Array} An array of objects: [{day: "Mon", time: "8:00 AM"}, ...]
+*/
+function collectAvailability() {
+    const availability = [];
+    const table = document.getElementById('calendarTable');
+    const rows = table.querySelectorAll('tbody tr');
+
+    rows.forEach((row, rowIndex) => {
+        const timeCell = row.querySelector('td:first-child');
+        if (!timeCell) return; // Skip if no time cell is found
+
+        const timeSlot = timeCell.textContent;
+        const dayCells = row.querySelectorAll('.calendar-cell');
+
+        dayCells.forEach((cell, dayIndex) => {
+            if (cell.classList.contains('selected')) {
+                // Map day index (0-6) to day name
+                const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                availability.push({
+                    day: daysOfWeek[dayIndex],
+                    time: timeSlot
+                });
+            }
+        });
+    });
+    return availability;
+}
 
 
 
