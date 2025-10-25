@@ -39,6 +39,10 @@ def index():
     # ensuring the Flask application loads the correct file.
     return render_template('index.html', date=now) 
 
+@app.route('/results')
+def results():
+    return render_template('results.html')
+
 
 # -------------------------------------------------------------------
 # CORE ACTIVITY FINDER LOGIC
