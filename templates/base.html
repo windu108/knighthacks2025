@@ -4,18 +4,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% endblock %}</title>
+  <title>Meeting/Activity App</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+
   <style>
-    /* Add a basic style for the selected calendar cell */
+    /* Styling for the calendar cells */
     .calendar-cell.selected {
       background-color: #0d6efd;
-      /* Bootstrap primary color */
+      /* Highlight selected slots using Bootstrap primary color */
       cursor: pointer;
     }
 
     .calendar-cell {
       cursor: pointer;
+    }
+
+    /* CUSTOM STYLE: Ensure the Interests textarea expands to fill space */
+    #interestsContainer {
+      flex-grow: 1;
+      /* Allows the container to fill the available vertical space */
+      display: flex;
+      flex-direction: column;
+    }
+
+    #interestsInput {
+      flex-grow: 1;
+      /* Makes the textarea itself expand */
+      min-height: 100px;
+      /* Ensures a minimum height */
+    }
+
+    /* CUSTOM STYLE: Remove the background from the time column (Bootstrap table-secondary override) */
+    .table-responsive .table-dark+tbody .time-cell {
+      background-color: var(--bs-body-bg) !important;
+      /* Use the main body background */
+      color: var(--bs-body-color);
+      /* Ensure text is readable */
     }
   </style>
 </head>
@@ -24,88 +48,78 @@
   <nav class="navbar sticky-top bg-body-tertiary border-bottom border-primary border-3">
     <div class="container-fluid">
       <div class="col-4 justify-content-start">
-        <a class="navbar-brand" href="{{ url_for('index') }}">Meeting App</a>
+        <a class="navbar-brand" href="/">Meeting App</a>
       </div>
     </div>
   </nav>
 
   <div class="container mt-4">
-    {% block content %}{% endblock %}
-    {% block scripts %}{% endblock %}
-  </div>
+    <h2 class="text-center mb-4">Profile & Activity Finder</h2>
 
-  <div class="container">
-    <div class="row g-4">
-      <h2 class="text-center mb-4"> Profile </h2>
+    <div class="row min-vh-50">
 
-      <div class="col-md-4">
-        <!-- Location Input -->
+      <div class="col-md-5 d-flex flex-column h-100">
         <div class="mb-3">
           <label for="locationInput" class="form-label">Location</label>
-          <input type="text" class="form-control" id="locationInput" placeholder="Enter your current location">
+          <input type="text" class="form-control" id="locationInput"
+            placeholder="Enter your current location (e.g., Orlando)">
         </div>
 
-        <!-- Budget Input -->
         <div class="mb-3">
           <label for="budgetInput" class="form-label">Budget</label>
-          <input type="text" class="form-control" id="budgetInput" placeholder="Enter your budget? ">
+          <input type="text" class="form-control" id="budgetInput" placeholder="Enter your max budget (e.g., 50)">
         </div>
 
-        <!-- Interest Input -->
-        <div class="mb-3">
-          <label for="interestInput" class="form-label">Interests</label>
-          <input type="text" class="form-control" id="interestInput" placeholder="Enter your interests to share">
+        <div class="mb-3" id="interestsContainer">
+          <label for="interestsInput" class="form-label">Interests (Comma-separated list)</label>
+          <textarea class="form-control" id="interestsInput" rows="3"
+            placeholder="e.g., Hiking, Skydiving, Themeparks, Great Food"></textarea>
         </div>
       </div>
 
-      <div class="col-md-8">
-          <!-- Calendar -->
-        <div class="card p-3 shadow-sm">
-          <h3 class="mb-3">Availability Calendar</h3>
-
-          <div class="table-responsive">
-            <table class="table table-bordered text-center align-middle" id="calendarTable">
-              <thead class="table-dark">
-                <tr>
-                  <th>Time</th>
-                  <th>Mon</th>
-                  <th>Tue</th>
-                  <th>Wed</th>
-                  <th>Thu</th>
-                  <th>Fri</th>
-                  <th>Sat</th>
-                  <th>Sun</th>
-                </tr>
-              </thead>
-              <tbody>
-              </tbody>
-            </table>
-          </div>
+      <div class="col-md-7">
+        <h3 class="text-center mb-3">Simple Availability Calendar</h3>
+        <div class="table-responsive">
+          <table class="table table-bordered text-center align-middle" id="calendarTable">
+            <thead class="table-dark">
+              <tr>
+                <th>Time</th>
+                <th>Mon</th>
+                <th>Tue</th>
+                <th>Wed</th>
+                <th>Thu</th>
+                <th>Fri</th>
+                <th>Sat</th>
+                <th>Sun</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-
-    <!-- Button -->
     <div class="d-grid mt-4">
-      <button id="submitBtn" class="btn btn-primary">Submit</button>
+      <button id="submitBtn" class="btn btn-primary btn-lg">Find Activity & Check Availability</button>
     </div>
 
-    <!-- Output -->
-    <div class="mt-4">
+    <div class="mt-5 mb-5">
       <div class="box output-box p-3 border rounded">
-        <h5>Output:</h5>
+        <h5>AI Recommendation:</h5>
         <div id="outputText" class="mt-2 text-secondary">Waiting for input...</div>
       </div>
     </div>
-  </div>
 
+  </div>
   <script>
     //==============================================================
     // SCRIPTS FOR DATA COLLECTION AND SUBMISSION TO PYTHON BACKEND
     //==============================================================
+    // Get references to all necessary DOM elements
     const submitBtn = document.getElementById('submitBtn');
     const locationInput = document.getElementById('locationInput');
     const budgetInput = document.getElementById('budgetInput');
+    const interestsInput = document.getElementById('interestsInput');
     const outputText = document.getElementById('outputText');
 
     /**
@@ -119,14 +133,14 @@
 
       rows.forEach((row, rowIndex) => {
         const timeCell = row.querySelector('td:first-child');
-        if (!timeCell) return; // Skip if no time cell found
+        if (!timeCell) return; // Skip if no time cell is found
 
-        const timeSlot = timeCell.textContent; // e.g., "8:00 AM"
+        const timeSlot = timeCell.textContent;
         const dayCells = row.querySelectorAll('.calendar-cell');
 
         dayCells.forEach((cell, dayIndex) => {
           if (cell.classList.contains('selected')) {
-            // dayIndex 0=Mon, 6=Sun
+            // Map day index (0-6) to day name
             const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
             availability.push({
               day: daysOfWeek[dayIndex],
@@ -138,114 +152,143 @@
       return availability;
     }
 
-    // When the button is pressed
+    // Event listener for the main submit button
     submitBtn.addEventListener('click', () => {
-      // 1. Collect all data
+      // 1. Collect all data from input fields and calendar
       const location = locationInput.value.trim();
       const budget = budgetInput.value.trim();
-      const interest = interestInput.value.trim();
+      const interests = interestsInput.value.trim();
       const availability = collectAvailability();
 
-      // Basic validation
-      if (location === "" || budget === "" || interest === "") {
+      // Package interests as an array, as expected by the Python backend's prompt assembly
+      const interestsArray = [interests];
+
+
+      // Basic client-side validation
+      if (location === "" || budget === "" || interests === "") {
         outputText.textContent = "⚠️ Please enter Location, Budget, and Interests!";
-        return;
+        return; // Stop execution if validation fails
       }
 
-      // Prepare the data payload for the server
+      // Prepare the data payload for the server as a JSON object
       const postData = {
         location: location,
         budget: budget,
-        interest: interest,
-        availability: availability // Array of selected time slots
+        availability: availability,
+        interests: interestsArray
       };
 
-      // 2. Show processing message
-      outputText.textContent = "Processing input and sending data to Python backend...";
+      // 2. Show processing message to the user
+      outputText.textContent = "Processing input and consulting the AI...";
 
-      // 3. Send the data to the Python backend (Flask endpoint)
-      fetch('/submit_data', {
+      // 3. Send the data to the Python backend (Flask endpoint: /get_recommendation)
+      fetch('/get_recommendation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(postData),
+        body: JSON.stringify(postData), // Convert JavaScript object to JSON string
       })
         .then(response => {
+          // Check for HTTP errors (like 404 or 500)
           if (!response.ok) {
-            // Throw an error if the HTTP status is 4xx or 5xx
-            return response.json().then(err => { throw new Error(`Server responded with status ${response.status}: ${err.message || response.statusText}`); });
+            // Read the text of the error response and throw a detailed error
+            return response.text().then(text => {
+              throw new Error(`Server status ${response.status}: ${text.substring(0, 100)}...`);
+            });
           }
-          return response.json(); // Expect a JSON response from the Python server
+          return response.json(); // If successful, parse the JSON response body
         })
         .then(data => {
-          // 4. Update the output box with the server's response
-          const slotCount = data.slots_count !== undefined ? data.slots_count : availability.length;
-          outputText.innerHTML = `✅ **Success!** Server Reply: **${data.message}**<br>Location: ${location}<br>Budget: ${budget}<br>Slots Selected: ${slotCount}`;
+          // 4. Handle the successful JSON response from the server
+          const slotCount = availability.length;
+
+          // Extract the pre-formatted HTML from the 'recommendation' key
+          const aiRecommendation = data.recommendation;
+
+          if (aiRecommendation) {
+            // 1. Inject the entire HTML content from the Flask response
+            outputText.innerHTML = aiRecommendation;
+
+            // 2. Append the user data summary *after* the recommendation
+            outputText.innerHTML += `
+                  <hr>
+                  <small class="text-muted">
+                      **Your Data Processed:**<br>
+                      Location: ${location}<br>
+                      Budget: ${budget}<br>
+                      Slots Selected: ${slotCount}
+                  </small>
+              `;
+          } else {
+            // Fallback if the server returned a 200 OK but the JSON was missing the key
+            outputText.innerHTML = `⚠️ **Server Reply Success, but Data Missing.** Server returned: ${JSON.stringify(data)}`;
+          }
         })
         .catch(error => {
+          // 5. Handle any errors during the fetch process
           console.error('Fetch error:', error);
-          outputText.textContent = `❌ Error sending data: ${error.message}`;
+          // Display the error message to the user
+          outputText.innerHTML = `❌ **Error connecting to server or API:** ${error.message}`;
         });
     });
 
+
     //==============================================================
-    // SCRIPTS FOR CALENDAR RENDERING AND INTERACTION
+    // SCRIPTS FOR CALENDAR RENDERING AND INTERACTION (COMPLETE LOGIC)
     //==============================================================
+
+    // This block executes once the page content has fully loaded
     document.addEventListener("DOMContentLoaded", function () {
       const tbody = document.querySelector("#calendarTable tbody");
 
-      // Generate time slots (8 AM to 8 PM)
-      const startHour = 8;
-      const endHour = 20;
-      for (let hour = startHour; hour <= endHour; hour++) {
-        const row = document.createElement("tr");
-        const timeCell = document.createElement("td");
-        const suffix = hour >= 12 ? "PM" : "AM";
-        const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-        timeCell.textContent = `${displayHour}:00 ${suffix}`;
-        row.appendChild(timeCell);
+      // Define the time range for the calendar grid
+      const startHour = 8; // 8 AM
+      const endHour = 20; // 8 PM (24-hour format)
 
-        // Create 7 cells for days (Mon-Sun)
-        for (let day = 0; day < 7; day++) {
-          const cell = document.createElement("td");
-          cell.classList.add("calendar-cell");
-          cell.style.height = "40px";
-          row.appendChild(cell);
-        }
-
-        tbody.appendChild(row);
+      /**
+       * Converts 24-hour time to 12-hour format (e.g., 14 -> 2:00 PM)
+       * @param {number} hour - The hour in 24-hour format (0-23)
+       * @returns {string} The formatted time string
+       */
+      function formatTime(hour) {
+        if (hour === 0) return "12:00 AM";
+        if (hour === 12) return "12:00 PM";
+        return (hour % 12) + ":00 " + (hour < 12 ? "AM" : "PM");
       }
 
-      // ---- Click & Drag Selection Logic ----
-      let isMouseDown = false;
-      let selecting = false; // true = selecting, false = deselecting
+      // Loop through each hour to generate table rows
+      for (let hour = startHour; hour < endHour; hour++) {
+        const row = document.createElement('tr');
+        const timeSlot = formatTime(hour);
 
-      document.addEventListener("mousedown", function (e) {
-        if (e.target.classList.contains("calendar-cell")) {
-          isMouseDown = true;
-          // Determine if we are selecting (true) or deselecting (false)
-          selecting = !e.target.classList.contains("selected");
-          e.target.classList.toggle("selected", selecting);
+        // 1. Time Cell (The first column - acts as the row header)
+        const timeCell = document.createElement('td');
+        timeCell.textContent = timeSlot;
+        // NOTE: We replace table-secondary with the custom class time-cell to remove the background
+        timeCell.classList.add('time-cell');
+        row.appendChild(timeCell);
+
+        // 2. Day Cells (Mon-Sun)
+        for (let day = 0; day < 7; day++) {
+          const dayCell = document.createElement('td');
+          dayCell.classList.add('calendar-cell');
+          dayCell.dataset.time = timeSlot; // Data attribute for time
+          dayCell.dataset.dayIndex = day;  // Data attribute for day (0=Mon, 6=Sun)
+          dayCell.textContent = ' '; // Empty content, just for display/clicking
+
+          // Add click listener to toggle selection
+          dayCell.addEventListener('click', function () {
+            this.classList.toggle('selected');
+          });
+
+          row.appendChild(dayCell);
         }
-      });
 
-      document.addEventListener("mouseover", function (e) {
-        if (isMouseDown && e.target.classList.contains("calendar-cell")) {
-          e.target.classList.toggle("selected", selecting);
-        }
-      });
-
-      document.addEventListener("mouseup", function () {
-        isMouseDown = false;
-      });
-
-      // Prevent text selection while dragging
-      document.addEventListener("dragstart", e => e.preventDefault());
+        tbody.appendChild(row); // Append the completed row to the table body
+      }
     });
   </script>
-
-  <script src="{{ url_for('node_modules', filename='bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
 </body>
 
 </html>

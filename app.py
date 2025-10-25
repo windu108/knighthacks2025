@@ -1,103 +1,133 @@
-# app.py
-
-# API Key: AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo
-from google import genai
+import os
+import json
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime
+from google import genai
+from google.genai import types
 
-# Setup client using google api key
-# NOTE: In a production app, you would load this from an environment variable!
-client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
-
-# Initialize the main Flask app
-# NOTE: Ensure you have a 'templates' folder with 'index.html' and 
-# a 'static' folder for assets.
+# --- Configuration ---
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
-# ----------------------------------------------------------------------
-# Helper Route for node_modules (if you are using local packages like Bootstrap)
-# ----------------------------------------------------------------------
+# Initialize the Gemini client. It automatically looks for the GEMINI_API_KEY
+# environment variable.
+try:
+    #Create client based on the api key
+    client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
+
+    print("Gemini Client Initialized Successfully.")
+except Exception as e:
+    #Error if can't find api key
+    print(f"Error initializing Gemini client: {e}. Check your GEMINI_API_KEY environment variable.")
+    client = None
+
+# Define a view function for node_modules (can be left as is, but often unnecessary)
 @app.route('/node_modules/<path:filename>')
 def node_modules(filename):
-    """
-    Serves files from the 'node_modules' directory for development.
-    Requires 'node_modules' to be in the same directory as this script.
-    """
     return app.send_static_file(f'../node_modules/{filename}') 
 
-# ----------------------------------------------------------------------
-# Route to Serve the Main Page
-# ----------------------------------------------------------------------
+
 @app.route('/', methods=['GET'])
 def index():
-    """
-    Renders the main page template (e.g., index.html).
-    """
     now = datetime.now()
-    return render_template('index.html', date=now) 
+    # Assuming index.html is actually base.html or a file that includes the form
+    return render_template('base.html', date=now) 
 
-# ----------------------------------------------------------------------
-# Route to Process Data and Call the Gemini API
-# ----------------------------------------------------------------------
-@app.route('/get_recommendation', methods=['POST'])
+
+# -------------------------------------------------------------------
+# !!! CORE ACTIVITY FINDER LOGIC !!!
+#Reverted route to /get_recommendation to match base.html fetch call.
+@app.route('/get_recommendation', methods=['POST']) 
 def get_recommendation():
-    """
-    Receives user data from the front-end, constructs a prompt, 
-    calls the Gemini API, and returns the AI's recommendation.
-    """
+    if not client:
+        return jsonify({"recommendation": "Error: AI client not initialized. Check API Key configuration."}), 500
+
     if not request.is_json:
-        return jsonify({"message": "Missing JSON in request"}), 400
+        return jsonify({"recommendation": "Missing JSON in request"}), 400
 
-    data = request.get_json()
-
-    # Extract the fields from the received JSON data
-    location = data.get('location', 'Unknown City')
-    budget = data.get('budget', 'flexible') 
-    
-    # Assuming 'interests' is an array of strings like: 
-    # ["Hiking, Skydiving, Snorkling", "Hiking, Themeparks", "Great Food"]
-    responses = data.get('interests', []) 
-
-    # --- Fallback/Static Data for Testing if dynamic data is missing ---
-    if not responses:
-         responses = ["Hiking, Skydiving, Snorkling", "Hiking, Themeparks", "Great Food"]
-
-    # 1. Format the user responses into the desired string (User1: (response) User2: (response) ...)
-    formatted_responses = ""
-    for i, response in enumerate(responses):
-        formatted_responses += f"User{i + 1}: ({response}) " 
-
-    # 2. Construct the final prompt string with detailed instructions
-    prompt = (
-        f'We have multiple users who all reside in {location}. They have a budget of ${budget}. '
-        f'Their interests are as follows: {formatted_responses} '
-        'Suggest a single activity that would be a good fit for all of them within the budget and location. '
-        'Put your response in the following format: give the name of the activity in bold, then list its cost and address on the next line then finally a very short description of the activity. '
-        'Give 3 options in order of most relevant to our users interest'
-    )
-    
-    # 3. Google Gemini API call
     try:
-        gemini_response = client.models.generate_content(
-            model='gemini-2.5-flash', 
-            contents=prompt
+        data = request.get_json()
+        location = data.get('location', 'an undisclosed location')
+        budget = data.get('budget', 'flexible budget')
+        # interests is an array containing a single string of comma-separated interests
+        # This is correct based on your frontend logic
+        interests = data.get('interests', ['general activities'])[0] 
+        availability = data.get('availability', [])
+
+        # Format the availability data for the prompt
+        availability_text = "Available time slots:\n"
+        if availability:
+            availability_text += "\n".join([f"- {slot['day']} at {slot['time']}" for slot in availability])
+        else:
+            availability_text += "- No specific slots provided. Suggest an activity that fits general times."
+
+        # --- 1. System Instruction & JSON Schema ---
+        system_instruction = """
+        You are an expert activity and experience planner. Your task is to recommend a single, 
+        specific activity that perfectly matches the user's profile. 
+        You MUST respond ONLY with a single JSON object that conforms exactly to the specified schema. 
+        DO NOT include any text, markdown, or explanations outside the JSON object.
+        """
+        
+        # Define the JSON Schema the model must adhere to.
+        response_schema = types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "activity_name": types.Schema(type=types.Type.STRING, description="The specific name of the recommended activity/venue."),
+                "description": types.Schema(type=types.Type.STRING, description="A detailed, engaging description of the activity and why it fits the user's interests, location, and budget."),
+                "cost_estimate": types.Schema(type=types.Type.STRING, description="A clear cost estimate (e.g., '$20-30 per person', 'Free', or 'High-End'). Must respect the user's max budget."),
+                "best_time_slot_suggestion": types.Schema(type=types.Type.STRING, description="Suggest one specific, plausible time slot from the user's available times, or a general time if no slots were provided (e.g., 'Suggest Monday at 7:00 PM', or 'Any weekday evening')."),
+                "fit_score": types.Schema(type=types.Type.INTEGER, description="A confidence score from 1 to 100 for how well this activity fits ALL the user criteria."),
+            },
+            required=["activity_name", "description", "cost_estimate", "best_time_slot_suggestion", "fit_score"]
         )
-        result_text = gemini_response.text
+
+        # --- 2. User Prompt ---
+        user_prompt = f"""
+        **User Profile for Activity Recommendation:**
+        - Location: {location}
+        - Max Budget: ${budget}
+        - Interests: {interests}
+        
+        {availability_text}
+
+        Generate one highly relevant activity recommendation in the required JSON format.
+        """
+
+        # --- 3. Gemini API Call ---
+        config = types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            response_mime_type="application/json", 
+            response_schema=response_schema,
+        )
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash', 
+            contents=user_prompt,
+            config=config,
+        )
+
+        # 4. Parse the JSON output from Gemini's response text
+        ai_data = json.loads(response.text)
+        
+        # 5. Format the JSON data into HTML for the frontend
+        formatted_recommendation = f"""
+            <h4 class='text-primary'>🎉 **{ai_data.get('activity_name', 'No Name')}**</h4>
+            <p><strong>Cost Estimate:</strong> {ai_data.get('cost_estimate', 'N/A')}</p>
+            <p><strong>Suggested Slot:</strong> {ai_data.get('best_time_slot_suggestion', 'N/A')}</p>
+            <p class='mt-3'>{ai_data.get('description', 'No description.')}</p>
+            <p class='text-success mt-3'>**Fit Score:** **{ai_data.get('fit_score', 'N/A')}/100**</p>
+        """
+
+        # 6. Send the formatted HTML back to the client
+        return jsonify({"recommendation": formatted_recommendation})
+
+    except json.JSONDecodeError:
+        # Handle cases where the model fails to produce valid JSON
+        return jsonify({"recommendation": f"⚠️ **Error:** AI failed to produce valid JSON. Raw output: {response.text[:100]}..."}), 500
     except Exception as e:
-        print(f"Gemini API Error: {e}")
-        # Return a clean error message to the user
-        result_text = "Sorry, the recommendation service ran into an error."
+        print(f"An unexpected error occurred: {e}")
+        return jsonify({"recommendation": f"❌ **Unexpected Server Error:** {str(e)}"}), 500
+# -------------------------------------------------------------------
 
-    # 4. Return the result back to the client-side JavaScript
-    return jsonify({
-        "status": "success",
-        "recommendation": result_text,
-        "location": location # Echo back some data for confirmation
-    })
-
-# ----------------------------------------------------------------------
-# Run the Flask App
-# ----------------------------------------------------------------------
 if __name__ == '__main__':
-    # 'debug=True' reloads the server automatically on file changes
     app.run(debug=True)
