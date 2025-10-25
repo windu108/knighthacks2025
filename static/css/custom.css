@@ -11860,4 +11860,18 @@ textarea.form-control-lg {
   }
 }
 
+.calendar-cell {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.calendar-cell:hover {
+  background-color: #0d6efd30; /* light blue hover */
+}
+
+.calendar-cell.selected {
+  background-color: #0d6efd; /* Bootstrap primary color */
+  color: white;
+}
+
 /*# sourceMappingURL=custom.css.map */
