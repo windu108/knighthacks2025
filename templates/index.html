@@ -52,26 +52,26 @@
 
             <div class="col-md-5 d-flex flex-column h-100">
                 <div class="mb-3">
-                    <label for="locationInput" class="form-label">Location</label>
+                    <label for="locationInput" class="form-label"><strong>Location</strong></label>
                     <input type="text" class="form-control" id="locationInput"
                         placeholder="Enter your current location (e.g., Orlando)">
                 </div>
 
                 <div class="mb-3">
-                    <label for="budgetInput" class="form-label">Budget</label>
+                    <label for="budgetInput" class="form-label"><strong>Budget</strong>></label>
                     <input type="text" class="form-control" id="budgetInput"
                         placeholder="Enter your max budget (e.g., 50)">
                 </div>
 
                 <div class="mb-3" id="interestsContainer">
-                    <label for="interestsInput" class="form-label">Interests (Comma-separated list)</label>
+                    <label for="interestsInput" class="form-label"><strong>Interests (Comma-separated list)</strong></label>
                     <textarea class="form-control" id="interestsInput" rows="3"
                         placeholder="e.g., Hiking, Skydiving, Themeparks, Great Food"></textarea>
                 </div>
             </div>
 
             <div class="col-md-7">
-                <h3 class="text-center mb-3">Simple Availability Calendar</h3>
+                <h4 class="text-center mb-1">Your Availability Schedule</h4>
                 <div class="table-responsive">
                     <table class="table table-bordered text-center align-middle" id="calendarTable">
                         <thead class="table-dark">
@@ -95,14 +95,6 @@
         <div class="d-grid mt-4">
             <a id="submitBtn" class="btn btn-primary btn-lg" href="{{ url_for('results') }}">Find Activity & Check Availability</a>
         </div>
-
-        <div class="mt-5 mb-5">
-            <div class="box output-box p-3 border rounded">
-                <h5>AI Recommendation:</h5>
-                <div id="outputText" class="mt-2 text-secondary">Waiting for input...</div>
-            </div>
-        </div>
-
     </div>
     <script>
         //==============================================================
@@ -245,9 +237,9 @@
              * @returns {string} The formatted time string
              */
             function formatTime(hour) {
-                if (hour === 0) return "12:00 AM";
-                if (hour === 12) return "12:00 PM";
-                return (hour % 12) + ":00 " + (hour < 12 ? "AM" : "PM");
+                if (hour === 0) return "12 AM";
+                if (hour === 12) return "12 PM";
+                return (hour % 12) + (hour < 12 ? "AM" : "PM");
             }
 
             // Loop through each hour to generate table rows

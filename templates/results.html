@@ -7,3 +7,106 @@
 
 
 {% endblock %}
+
+{% block content %}
+
+        <div class="mt-5 mb-5">
+            <div class="box output-box p-3 border rounded">
+                <h5>AI Recommendation:</h5>
+                <div id="outputText" class="mt-2 text-secondary">Waiting for input...</div>
+            </div>
+        </div>
+
+        <div class="container mt-5">
+            <h3 class="text-center mb-4">Joint Availability Schedule</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle" id="calendarTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Time</th>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                            <th>Sun</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const tbody = document.querySelector("#calendarTable tbody");
+
+                // Define the time range for the calendar grid
+                const startHour = 8; // 8 AM
+                const endHour = 20; // 8 PM (24-hour format)
+
+                /**
+                 * Converts 24-hour time to 12-hour format (e.g., 14 -> 2:00 PM)
+                 * @param {number} hour - The hour in 24-hour format (0-23)
+                 * @returns {string} The formatted time string
+                 */
+                function formatTime(hour) {
+                    if (hour === 0) return "12:00 AM";
+                    if (hour === 12) return "12:00 PM";
+                    return (hour % 12) + ":00 " + (hour < 12 ? "AM" : "PM");
+                }
+
+                // Loop through each hour to generate table rows
+                for (let hour = startHour; hour < endHour; hour++) {
+                    const row = document.createElement('tr');
+                    const timeSlot = formatTime(hour);
+
+                    // 1. Time Cell (The first column - acts as the row header)
+                    const timeCell = document.createElement('td');
+                    timeCell.textContent = timeSlot;
+                    // NOTE: We replace table-secondary with the custom class time-cell to remove the background
+                    timeCell.classList.add('time-cell');
+                    row.appendChild(timeCell);
+
+                    // 2. Day Cells (Mon-Sun)
+                    for (let day = 0; day < 7; day++) {
+                        const dayCell = document.createElement('td');
+                        dayCell.classList.add('calendar-cell');
+                        dayCell.dataset.time = timeSlot; // Data attribute for time
+                        dayCell.dataset.dayIndex = day;  // Data attribute for day (0=Mon, 6=Sun)
+                        dayCell.textContent = ' '; // Empty content, just for display/clicking
+
+                        row.appendChild(dayCell);
+                    }
+
+                    tbody.appendChild(row); // Append the completed row to the table body
+                }
+
+                // Click-and-drag selection
+                let isMouseDown = false;
+                let selecting = false;
+
+                document.addEventListener("mousedown", function (e) {
+                    if (e.target.classList.contains("calendar-cell")) {
+                        isMouseDown = true;
+                        selecting = !e.target.classList.contains("selected");
+                        e.target.classList.toggle("selected", selecting);
+                    }
+                });
+
+                document.addEventListener("mouseover", function (e) {
+                    if (isMouseDown && e.target.classList.contains("calendar-cell")) {
+                        e.target.classList.toggle("selected", selecting);
+                    }
+                });
+
+                document.addEventListener("mouseup", function () {
+                    isMouseDown = false;
+                });
+
+                document.addEventListener("dragstart", e => e.preventDefault());
+            });
+        </script>
+{% endblock %}
