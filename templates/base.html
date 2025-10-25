@@ -50,6 +50,12 @@
           <label for="budgetInput" class="form-label">Budget</label>
           <input type="text" class="form-control" id="budgetInput" placeholder="Enter your budget? ">
         </div>
+
+        <!-- Interest Input -->
+        <div class="mb-3">
+          <label for="interestInput" class="form-label">Interests</label>
+          <input type="text" class="form-control" id="interestInput" placeholder="Enter your interests to share">
+        </div>
       </div>
 
       <div class="col-md-8">
@@ -137,11 +143,12 @@
       // 1. Collect all data
       const location = locationInput.value.trim();
       const budget = budgetInput.value.trim();
+      const interest = interestInput.value.trim();
       const availability = collectAvailability();
 
       // Basic validation
-      if (location === "" || budget === "") {
-        outputText.textContent = "⚠️ Please enter both Location and Budget!";
+      if (location === "" || budget === "" || interest === "") {
+        outputText.textContent = "⚠️ Please enter Location, Budget, and Interests!";
         return;
       }
 
@@ -149,6 +156,7 @@
       const postData = {
         location: location,
         budget: budget,
+        interest: interest,
         availability: availability // Array of selected time slots
       };
 
