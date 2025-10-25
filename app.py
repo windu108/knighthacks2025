@@ -1,68 +1,103 @@
+# app.py
+
+# API Key: AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo
+from google import genai
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 
+# Setup client using google api key
+# NOTE: In a production app, you would load this from an environment variable!
+client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
+
 # Initialize the main Flask app
+# NOTE: Ensure you have a 'templates' folder with 'index.html' and 
+# a 'static' folder for assets.
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
-# Define a view function to serve files from the 'node_modules' directory
-# This handles the script tags like src="{{ url_for('node_modules', filename='bootstrap/...') }}"
+# ----------------------------------------------------------------------
+# Helper Route for node_modules (if you are using local packages like Bootstrap)
+# ----------------------------------------------------------------------
 @app.route('/node_modules/<path:filename>')
 def node_modules(filename):
-    # This serves files from the 'node_modules' folder at the root level of your project
-    # Ensure your 'node_modules' folder is peer-to-peer with 'app.py' and 'static'
+    """
+    Serves files from the 'node_modules' directory for development.
+    Requires 'node_modules' to be in the same directory as this script.
+    """
     return app.send_static_file(f'../node_modules/{filename}') 
 
-
+# ----------------------------------------------------------------------
+# Route to Serve the Main Page
+# ----------------------------------------------------------------------
 @app.route('/', methods=['GET'])
 def index():
     """
-    Renders the index.html template, which extends base.html.
+    Renders the main page template (e.g., index.html).
     """
     now = datetime.now()
-    
-    # We now render 'index.html', which will pull in all content from 'base.html'
     return render_template('index.html', date=now) 
 
-
-# --- THE ROUTE TO RECEIVE DATA ---
-@app.route('/submit_data', methods=['POST'])
-def submit_data():
+# ----------------------------------------------------------------------
+# Route to Process Data and Call the Gemini API
+# ----------------------------------------------------------------------
+@app.route('/get_recommendation', methods=['POST'])
+def get_recommendation():
     """
-    Receives JSON data (Location, Budget, Availability) sent via the fetch API
-    from the client-side JavaScript in base.html.
+    Receives user data from the front-end, constructs a prompt, 
+    calls the Gemini API, and returns the AI's recommendation.
     """
     if not request.is_json:
         return jsonify({"message": "Missing JSON in request"}), 400
 
     data = request.get_json()
 
-    # Extract the fields
-    location = data.get('location', 'N/A')
-    budget = data.get('budget', 'N/A')
-    availability = data.get('availability', [])
-
-    # --- Processing the Data in Python ---
+    # Extract the fields from the received JSON data
+    location = data.get('location', 'Unknown City')
+    budget = data.get('budget', 'flexible') 
     
-    # You can print the data to your terminal for debugging:
-    print("-" * 30)
-    print(f"✅ Data Received at {datetime.now().strftime('%H:%M:%S')}")
-    print(f"Location: {location}")
-    print(f"Budget: {budget}")
-    print(f"Number of available slots: {len(availability)}")
-    
-    # --- End of Processing ---
+    # Assuming 'interests' is an array of strings like: 
+    # ["Hiking, Skydiving, Snorkling", "Hiking, Themeparks", "Great Food"]
+    responses = data.get('interests', []) 
 
-    # Return a JSON response back to the JavaScript
-    num_slots = len(availability)
-    response = {
+    # --- Fallback/Static Data for Testing if dynamic data is missing ---
+    if not responses:
+         responses = ["Hiking, Skydiving, Snorkling", "Hiking, Themeparks", "Great Food"]
+
+    # 1. Format the user responses into the desired string (User1: (response) User2: (response) ...)
+    formatted_responses = ""
+    for i, response in enumerate(responses):
+        formatted_responses += f"User{i + 1}: ({response}) " 
+
+    # 2. Construct the final prompt string with detailed instructions
+    prompt = (
+        f'We have multiple users who all reside in {location}. They have a budget of ${budget}. '
+        f'Their interests are as follows: {formatted_responses} '
+        'Suggest a single activity that would be a good fit for all of them within the budget and location. '
+        'Put your response in the following format: give the name of the activity in bold, then list its cost and address on the next line then finally a very short description of the activity. '
+        'Give 3 options in order of most relevant to our users interest'
+    )
+    
+    # 3. Google Gemini API call
+    try:
+        gemini_response = client.models.generate_content(
+            model='gemini-2.5-flash', 
+            contents=prompt
+        )
+        result_text = gemini_response.text
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        # Return a clean error message to the user
+        result_text = "Sorry, the recommendation service ran into an error."
+
+    # 4. Return the result back to the client-side JavaScript
+    return jsonify({
         "status": "success",
-        # This message will be displayed in the HTML output box
-        "message": f"Server successfully processed your data! Found {num_slots} available slots.",
-        "slots_count": num_slots
-    }
+        "recommendation": result_text,
+        "location": location # Echo back some data for confirmation
+    })
 
-    return jsonify(response)
-
+# ----------------------------------------------------------------------
+# Run the Flask App
+# ----------------------------------------------------------------------
 if __name__ == '__main__':
-    # Ensure all HTML files are in the 'templates' folder.
+    # 'debug=True' reloads the server automatically on file changes
     app.run(debug=True)
