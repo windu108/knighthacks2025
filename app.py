@@ -8,12 +8,9 @@ app_node_modules = Flask(__name__, static_folder='node_modules', static_url_path
 app.add_url_rule('/node_modules/<path:filename>', endpoint='node_modules', view_func=app_node_modules.send_static_file)
 
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
-    
-    now = datetime.now()
-    
-    return render_template('index.html', date=now)
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
