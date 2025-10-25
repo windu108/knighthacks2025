@@ -287,6 +287,30 @@
 
         tbody.appendChild(row); // Append the completed row to the table body
       }
+
+    // Click-and-drag selection
+    let isMouseDown = false;
+    let selecting = false;
+
+    document.addEventListener("mousedown", function (e) {
+      if (e.target.classList.contains("calendar-cell")) {
+        isMouseDown = true;
+        selecting = !e.target.classList.contains("selected");
+        e.target.classList.toggle("selected", selecting);
+      }
+    });
+
+    document.addEventListener("mouseover", function (e) {
+      if (isMouseDown && e.target.classList.contains("calendar-cell")) {
+        e.target.classList.toggle("selected", selecting);
+      }
+    });
+
+    document.addEventListener("mouseup", function () {
+      isMouseDown = false;
+    });
+
+    document.addEventListener("dragstart", e => e.preventDefault());
     });
   </script>
 </body>
