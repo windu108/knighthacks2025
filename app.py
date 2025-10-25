@@ -11,12 +11,10 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 # Initialize the Gemini client. It automatically looks for the GEMINI_API_KEY
 # environment variable.
 try:
-    #Create client based on the api key
+    #gemini api key
     client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
-
     print("Gemini Client Initialized Successfully.")
 except Exception as e:
-    #Error if can't find api key
     print(f"Error initializing Gemini client: {e}. Check your GEMINI_API_KEY environment variable.")
     client = None
 
@@ -29,13 +27,11 @@ def node_modules(filename):
 @app.route('/', methods=['GET'])
 def index():
     now = datetime.now()
-    # Assuming index.html is actually base.html or a file that includes the form
     return render_template('base.html', date=now) 
 
 
 # -------------------------------------------------------------------
 # !!! CORE ACTIVITY FINDER LOGIC !!!
-#Reverted route to /get_recommendation to match base.html fetch call.
 @app.route('/get_recommendation', methods=['POST']) 
 def get_recommendation():
     if not client:
@@ -48,8 +44,6 @@ def get_recommendation():
         data = request.get_json()
         location = data.get('location', 'an undisclosed location')
         budget = data.get('budget', 'flexible budget')
-        # interests is an array containing a single string of comma-separated interests
-        # This is correct based on your frontend logic
         interests = data.get('interests', ['general activities'])[0] 
         availability = data.get('availability', [])
 
@@ -62,23 +56,34 @@ def get_recommendation():
 
         # --- 1. System Instruction & JSON Schema ---
         system_instruction = """
-        You are an expert activity and experience planner. Your task is to recommend a single, 
-        specific activity that perfectly matches the user's profile. 
-        You MUST respond ONLY with a single JSON object that conforms exactly to the specified schema. 
+        You are an expert activity and experience planner. Your task is to recommend three (3) distinct and specific activities that fit the user's profile.
+        You MUST respond ONLY with a single JSON object that contains a key named 'activities', which holds an array of exactly three JSON objects, each conforming exactly to the specified schema. 
         DO NOT include any text, markdown, or explanations outside the JSON object.
         """
         
-        # Define the JSON Schema the model must adhere to.
+        # Define the schema for a single activity object
+        activity_schema = types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "activity_name": types.Schema(type=types.Type.STRING, description="The specific, bold title for the recommended activity/venue."),
+                "address": types.Schema(type=types.Type.STRING, description="The location or address of the activity."),
+                "cost_estimate": types.Schema(type=types.Type.STRING, description="A clear cost estimate that respects the user's max budget."),
+                "brief_description": types.Schema(type=types.Type.STRING, description="A single, very brief sentence summarizing the activity."),
+            },
+            required=["activity_name", "address", "cost_estimate", "brief_description"]
+        )
+
+        # ✅ FIX 3: Define the overall response schema to contain the 'activities' array
         response_schema = types.Schema(
             type=types.Type.OBJECT,
             properties={
-                "activity_name": types.Schema(type=types.Type.STRING, description="The specific name of the recommended activity/venue."),
-                "description": types.Schema(type=types.Type.STRING, description="A detailed, engaging description of the activity and why it fits the user's interests, location, and budget."),
-                "cost_estimate": types.Schema(type=types.Type.STRING, description="A clear cost estimate (e.g., '$20-30 per person', 'Free', or 'High-End'). Must respect the user's max budget."),
-                "best_time_slot_suggestion": types.Schema(type=types.Type.STRING, description="Suggest one specific, plausible time slot from the user's available times, or a general time if no slots were provided (e.g., 'Suggest Monday at 7:00 PM', or 'Any weekday evening')."),
-                "fit_score": types.Schema(type=types.Type.INTEGER, description="A confidence score from 1 to 100 for how well this activity fits ALL the user criteria."),
+                "activities": types.Schema(
+                    type=types.Type.ARRAY,
+                    description="A list of three distinct activity recommendations.",
+                    items=activity_schema
+                ),
             },
-            required=["activity_name", "description", "cost_estimate", "best_time_slot_suggestion", "fit_score"]
+            required=["activities"]
         )
 
         # --- 2. User Prompt ---
@@ -90,7 +95,7 @@ def get_recommendation():
         
         {availability_text}
 
-        Generate one highly relevant activity recommendation in the required JSON format.
+        Generate three highly relevant activity recommendation in the required JSON format.
         """
 
         # --- 3. Gemini API Call ---
@@ -108,15 +113,26 @@ def get_recommendation():
 
         # 4. Parse the JSON output from Gemini's response text
         ai_data = json.loads(response.text)
-        
-        # 5. Format the JSON data into HTML for the frontend
-        formatted_recommendation = f"""
-            <h4 class='text-primary'>🎉 **{ai_data.get('activity_name', 'No Name')}**</h4>
-            <p><strong>Cost Estimate:</strong> {ai_data.get('cost_estimate', 'N/A')}</p>
-            <p><strong>Suggested Slot:</strong> {ai_data.get('best_time_slot_suggestion', 'N/A')}</p>
-            <p class='mt-3'>{ai_data.get('description', 'No description.')}</p>
-            <p class='text-success mt-3'>**Fit Score:** **{ai_data.get('fit_score', 'N/A')}/100**</p>
-        """
+
+        # Initialize the formatted HTML string
+        formatted_recommendation = ""
+        recommendation_list = ai_data.get('activities', [])
+
+        # 5. Loop through the three activities and format the data into HTML
+        if recommendation_list:
+            # We use an empty h4 element to separate the summary from the recommendation section
+            formatted_recommendation += "<h4></h4>"
+            for i, activity in enumerate(recommendation_list):
+                # Format the activity details as requested: Bold Title, Cost/Address, Brief Description
+                # Note: We now use 'brief_description' (from the new schema) instead of 'description' (from the old schema)
+                activity_html = f"""
+                    <h5 class='mt-3 mb-0 text-primary'><strong>{i+1}. {activity.get('activity_name', 'No Name')}</strong></h5>
+                    <p class='text-muted mb-1'>Cost: {activity.get('cost_estimate', 'N/A')} &bull; Address: {activity.get('address', 'N/A')}</p>
+                    <p>{activity.get('brief_description', 'No description.')}</p>
+                """
+                formatted_recommendation += activity_html
+        else:
+            formatted_recommendation = "Could not generate activities based on the criteria. Check the raw response."
 
         # 6. Send the formatted HTML back to the client
         return jsonify({"recommendation": formatted_recommendation})
@@ -125,9 +141,9 @@ def get_recommendation():
         # Handle cases where the model fails to produce valid JSON
         return jsonify({"recommendation": f"⚠️ **Error:** AI failed to produce valid JSON. Raw output: {response.text[:100]}..."}), 500
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"An unexpected server error occurred: {e}")
         return jsonify({"recommendation": f"❌ **Unexpected Server Error:** {str(e)}"}), 500
 # -------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8080)
