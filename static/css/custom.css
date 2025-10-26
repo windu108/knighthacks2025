@@ -11888,5 +11888,13 @@ textarea.form-control-lg {
   vertical-align: middle;
 }
 
+.welcome-container {
+  height: 100vh; /* full screen height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* vertical center */
+  align-items: center;     /* horizontal center */
+  text-align: center;      /* center text */
+}
 
 /*# sourceMappingURL=custom.css.map */

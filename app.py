@@ -2,8 +2,8 @@ import os
 import json
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime
-from google import genai
-from google.genai import types
+#from google import genai
+#from google.genai import types
 
 # --- Flask and Gemini Configuration ---
 
@@ -31,7 +31,12 @@ def node_modules(filename):
 
 
 # Main route for the application. Handles the initial page load.
-@app.route('/', methods=['GET'])
+@app.route('/')
+def login():
+    now = datetime.now()
+    return render_template('login.html', date=now)
+
+@app.route('/calendar', methods=['GET'])
 def index():
     now = datetime.now()
     # Renders the 'index.html' template file, which contains the user form and calendar, 
@@ -41,6 +46,7 @@ def index():
 @app.route('/results')
 def results():
     return render_template('results.html')
+
 
 
 # -------------------------------------------------------------------

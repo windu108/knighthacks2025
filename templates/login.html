@@ -2,11 +2,14 @@
     {% block title %}Group Activity Planner{% endblock %}
     
     {% block content %}
-        <h1>Welcome!</h1>
-        <p>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        <div class="welcome-container">
+            <h1 class="mb-4">Welcome to ClickMeet</h1>
+            <p>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
 
-        <form method="POST" action="/login">
-            <input type="text" name="username" placeholder="Enter your name" required>
-            <input type="submit" value="Login">
-        </form>
+            <form method="POST" action="/login">
+                <input type="text" name="username" placeholder="Enter your name" required>
+                <!--input type="submit" value="Login-->
+                <a id="loginBtn" class="btn btn-primary btn-lg" href="{{ url_for('index') }}">Login</a>
+            </form>
+            </div>
     {% endblock %}
