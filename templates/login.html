@@ -3,7 +3,7 @@
     
     {% block content %}
         <div class="welcome-container">
-            <img src="{{ url_for('static', filename='images/MainLogo.png') }}" alt="Da Logo" class="logo">
+            <img src="{{ url_for('static', filename='images/MainLogo.png') }}" alt="Main Logo" class="logo" style="width:400px; height:auto">
             <h1 class="mb-4">Welcome to ClickMeet</h1>
             <p><strong>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</strong></p>
 
