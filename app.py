@@ -51,11 +51,12 @@ def results():
 def get_recommendation():
     # 1. Initial Checks
     # If the client failed to initialize at startup, return a 500 server error immediately.
+    # NOTE: Updated return format to align with successful response structure for clarity
     if not client:
-        return jsonify({"recommendation": "Error: AI client not initialized. Check API Key configuration."}), 500
+        return jsonify({"success": False, "error": "AI client not initialized. Check API Key configuration."}), 500
     # Ensure the request data is in the expected JSON format.
     if not request.is_json:
-        return jsonify({"recommendation": "Missing JSON in request"}), 400
+        return jsonify({"success": False, "error": "Missing JSON in request"}), 400
 
     # The entire core logic is wrapped in a try/except block to handle API communication failures
     # and invalid JSON parsing, ensuring the server doesn't crash.
@@ -67,26 +68,19 @@ def get_recommendation():
         # Interests are extracted from the list provided by the frontend.
         interests = data.get('interests', ['general activities'])[0] 
         availability = data.get('availability', [])
-
-        # Format the collected calendar availability into a descriptive string for the AI prompt.
-        availability_text = "Available time slots:\n"
-        if availability:
-            availability_text += "\n".join([f"- {slot['day']} at {slot['time']}" for slot in availability])
-        else:
-            availability_text += "- No specific slots provided. Suggest an activity that fits general times."
+        # NOTE: Availability is extracted but NOT used in the prompt as requested.
 
         # --- 3. Gemini System Instruction and Structured Output Schema ---
         
         # The system instruction guides the model's behavior, forcing it to act as an activity planner
         # and to strictly output three results in the required JSON format.
         system_instruction = """
-        You are an expert activity and experience planner. Your task is to recommend three (3) distinct and specific activities that fit the user's profile.
+        You are an expert activity and experience planner. We have multiple users. Your task is to recommend three (3) distinct and specific activities that best fits all of the user's profile.
         You MUST respond ONLY with a single JSON object that contains a key named 'activities', which holds an array of exactly three JSON objects, each conforming exactly to the specified schema. 
         DO NOT include any text, markdown, or explanations outside the JSON object.
         """
         
-        # Define the schema for a single activity object. This structure guarantees the output 
-        # includes only the required fields: name, address, cost, and a brief description.
+        # Define the schema for a single activity object. 
         activity_schema = types.Schema(
             type=types.Type.OBJECT,
             properties={
@@ -94,12 +88,14 @@ def get_recommendation():
                 "address": types.Schema(type=types.Type.STRING, description="The location or address of the activity."),
                 "cost_estimate": types.Schema(type=types.Type.STRING, description="A clear cost estimate that respects the user's max budget."),
                 "brief_description": types.Schema(type=types.Type.STRING, description="A single, very brief sentence summarizing the activity."),
-            },
-            required=["activity_name", "address", "cost_estimate", "brief_description"]
+                # FIX: Removed the colon from "website_link:"
+                "website_link": types.Schema(type=types.Type.STRING, description="A valid, full URL (e.g., https://example.com) to a website for the user to learn more about the activity.")
+            },  
+            required=["activity_name", "address", "cost_estimate", "brief_description", "website_link"]
         )
 
-        # Define the overall response schema. This outer structure tells the model the final output 
-        # must be an object containing the list of activities.
+
+        # Define the overall response schema.
         response_schema = types.Schema(
             type=types.Type.OBJECT,
             properties={
@@ -113,14 +109,13 @@ def get_recommendation():
         )
 
         # --- 4. User Prompt Assembly ---
+        # NOTE: Availability text is intentionally excluded from the prompt
         user_prompt = f"""
         **User Profile for Activity Recommendation:**
         - Location: {location}
         - Max Budget: ${budget}
         - Interests: {interests}
         
-        {availability_text}
-
         Generate three highly relevant activity recommendation in the required JSON format.
         """
 
@@ -139,6 +134,10 @@ def get_recommendation():
             config=config,
         )
 
+        # 🎯 FIX 1: Print statement is now correctly AFTER the API call
+        print("Received AI Response:")
+        print(response.text)
+
         # 6. Process Gemini's JSON Response
         # Parse the JSON string received from the AI into a Python dictionary.
         ai_data = json.loads(response.text)
@@ -150,27 +149,40 @@ def get_recommendation():
             # Add a separator element before the list begins.
             formatted_recommendation += "<h4></h4>" 
             for i, activity in enumerate(recommendation_list):
+                # 🎯 FIX 2: Define the 'link' variable by extracting it from the current activity
+                link = activity.get('website_link', '#') 
+                
                 # Format: Bold Title (h5), Cost/Address line (p.text-muted), Brief Description (p).
                 activity_html = f"""
                     <h5 class='mt-3 mb-0 text-primary'><strong>{i+1}. {activity.get('activity_name', 'No Name')}</strong></h5>
                     <p class='text-muted mb-1'>Cost: {activity.get('cost_estimate', 'N/A')} &bull; Address: {activity.get('address', 'N/A')}</p>
                     <p>{activity.get('brief_description', 'No description.')}</p>
-                """
+
+                    <p><a href="{link}" target="_blank" class="btn btn-sm btn-outline-secondary">Learn More</a></p>
+                    <hr>
+                    """
                 formatted_recommendation += activity_html
         else:
             formatted_recommendation = "Could not generate activities based on the criteria. Check the raw response."
 
         # 7. Send the final formatted HTML back to the client.
-        return jsonify({"recommendation": formatted_recommendation})
+        # Returning full data structure to support frontend redirect/display logic
+        return jsonify({
+            "success": True,
+            "ai_recommendation": formatted_recommendation,
+            "location": location,
+            "budget": budget,
+            "availability_json": json.dumps(availability) 
+        })
 
     # --- Specific Error Handling ---
     except json.JSONDecodeError:
         # Handle failures if the model returns malformed JSON despite the schema constraint.
-        return jsonify({"recommendation": f"⚠️ **Error:** AI failed to produce valid JSON. Raw output: {response.text[:100]}..."}), 500
+        return jsonify({"success": False, "error": f"⚠️ **Error:** AI failed to produce valid JSON. Raw output: {response.text[:100]}..."}), 500
     except Exception as e:
         # Catch any other unexpected server issues (e.g., API request timeout).
         print(f"An unexpected server error occurred: {e}")
-        return jsonify({"recommendation": f"❌ **Unexpected Server Error:** {str(e)}"}), 500
+        return jsonify({"success": False, "error": f"❌ **Unexpected Server Error:** {str(e)}"}), 500
 # -------------------------------------------------------------------
 
 # Run the Flask app only when the script is executed directly.
