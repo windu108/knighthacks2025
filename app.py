@@ -1,98 +1,46 @@
 import os
-from flask import (
-    Flask, 
-    render_template, 
-    session, 
-    request, 
-    send_from_directory, 
-    redirect, 
-    url_for
-)
-from datetime import datetime
 import json
+from flask import Flask, render_template, request, jsonify
+from datetime import datetime
 from google import genai
 from google.genai import types
 
-activities = []
+# --- Flask and Gemini Configuration ---
 
+# Initialize the Flask application, setting up the path for static files (CSS, JS)
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.secret_key = 'your_random_secret_key_here' 
+
+# Initialize the Gemini client. 
+# This process automatically searches the environment variables (specifically GEMINI_API_KEY) 
+# for the API key, which is the secure, recommended method.
+try:
+    # Client initialization reads the key securely from the system environment.
+    client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
+    print("Gemini Client Initialized Successfully.")
+except Exception as e:
+    # If initialization fails (e.g., API key is missing or invalid), the error is logged, 
+    # and the 'client' variable is set to None to prevent API calls.
+    print(f"Error initializing Gemini client: {e}. Check your GEMINI_API_KEY environment variable.")
+    client = None
+
+# Route definition for serving static files located in the 'node_modules' directory.
+# This is often used for front-end libraries like Bootstrap or jQuery.
+@app.route('/node_modules/<path:filename>')
+def node_modules(filename):
+    return app.send_static_file(f'../node_modules/{filename}') 
+
+
+# Main route for the application. Handles the initial page load.
 @app.route('/', methods=['GET'])
 def index():
     now = datetime.now()
-    return render_template('index2.html', date=now)
-
-@app.route('/home')
-def home():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
-    return render_template('home.html',activities=activities)
-
-@app.route('/login', methods=['POST'])
-def login():
-    session['username'] = request.form['username']
-    session['voted_on'] = []
-    return redirect(url_for('home'))
-
-
-@app.route('/add_activity', methods=['POST'])
-def add_activity():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-
-    activity_name = request.form.get('activity_name')
-    
-    if activity_name:
-        if not activities:
-            new_id = 1
-        else:
-            new_id = max(activity['id'] for activity in activities) + 1
-            
-        new_activity = {
-            'id': new_id,
-            'name': activity_name,
-            'votes': 0
-        }
-        activities.append(new_activity)
-    
-    return redirect(url_for('home'))
-
-
-@app.route('/logout', methods=['POST'])
-def logout():
-    session.pop('username', None) 
-    session.pop('voted_on', None)
-    return redirect(url_for('index')) 
-
-
-@app.route('/vote/<int:activity_id>', methods=['POST'])
-def vote(activity_id):
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
-    if activity_id in session.get('voted_on', []):
-        print(f"User '{session['username']}' already voted for {activity_id}")
-        return redirect(url_for('home'))
-    
-    for activity in activities:
-        if activity['id'] == activity_id:
-            activity['votes'] += 1 
-            print(f"User '{session['username']}' voted for {activity['name']}")
-            session.setdefault('voted_on', []).append(activity_id)
-            session.modified = True
-            break 
-    return redirect(url_for('home'))
+    # Renders the 'index.html' template file, which contains the user form and calendar, 
+    # ensuring the Flask application loads the correct file.
+    return render_template('index.html', date=now) 
 
 @app.route('/results')
-# Shows results
 def results():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
-    sorted_activities = sorted(activities, key=lambda x: x['votes'], reverse=True)
-    return render_template('results.html', activities=sorted_activities)
-
+    return render_template('results.html')
 
 
 # -------------------------------------------------------------------
