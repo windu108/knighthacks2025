@@ -44,7 +44,7 @@ def results():
 def receive_data():
     global last_entries
     data = request.get_json()
-    entries = data.get("entries", [])
+    entries = data["entries"]
     for entry in entries:
         print(entry)
     last_entries = entries  # store for /results
@@ -69,7 +69,7 @@ def get_recommendation(data):
 
     try:
         # Compute minimum budget
-        min_budget = min(entry.get("budget", float("inf")) for entry in data)
+        min_budget = min(float(entry.get("budget", float("inf"))) for entry in data)
         print("Minimum budget:", min_budget)
 
         # Concatenate interests

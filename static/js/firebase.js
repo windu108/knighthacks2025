@@ -100,7 +100,7 @@ onValue(entriesRef, (snapshot) => {
         if (iterationOne) {
             mutualAvailability = data.availability;
         }
-        else {
+        else if (data.availability) {
             mutualAvailability = mutualAvailability.filter(a =>
                 data.availability.some(b => JSON.stringify(a) === JSON.stringify(b))
             );
@@ -109,20 +109,24 @@ onValue(entriesRef, (snapshot) => {
 
     });
 
-    const entries = [];
-    snapshot.forEach(child => entries.push(child.val()));
+    const data = snapshot.val();
+    const entries = Object.values(data);
+    console.log("Entries:", entries);
+
+
 
     fetch("/receive-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entries })
+        body: JSON.stringify({ entries: entries })
     })
         .then(response => response.json())
         .then(data => {
             console.log("Response from Python:", data);
-            // You could update your HTML page with results here
-            // document.getElementById("serverResponse").textContent =
-            //     `Average budget: ${data.average_budget}`;
+            outputBox = document.getElementById("outputText");
+            if (outputBox) {
+                outputBox.innerHTML = data.message;
+            }
         })
         .catch(error => console.error("Error sending to Flask:", error));
 
@@ -133,12 +137,12 @@ onValue(entriesRef, (snapshot) => {
         ? JSON.stringify(mutualAvailability, null, 2)
         : "No mutual availability";
     
-    if (budgetResultText) {
-        budgetResultText.innerHTML = combinedBudgetString;
-    }
-    if (availabilityResultText) {
-        availabilityResultText.innerHTML = mutualAvailabilityString;
-    }
+    // if (budgetResultText) {
+    //     budgetResultText.innerHTML = combinedBudgetString;
+    // }
+    // if (availabilityResultText) {
+    //     availabilityResultText.innerHTML = mutualAvailabilityString;
+    // }
     
     mutualAvailability.forEach(slot => {
         let day = slot.day;
@@ -151,18 +155,9 @@ onValue(entriesRef, (snapshot) => {
             time = parseInt(time.substring(0,2));
         }
 
-        console.log(day);
-        console.log(time);
-
         const cell = document.getElementById(`${day}${time}`)
         if (cell) {
             cell.classList.add("selected");
         }
     })
 });
-
-function formatTime(hour) {
-    if (hour === 0) return "12:00 AM";
-    if (hour === 12) return "12:00 PM";
-    return (hour % 12) + ":00 " + (hour < 12 ? "AM" : "PM");
-}
