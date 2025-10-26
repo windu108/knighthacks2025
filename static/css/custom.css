@@ -11897,4 +11897,42 @@ textarea.form-control-lg {
   text-align: center;      /* center text */
 }
 
+.shimmer-button {
+  position: relative;
+  background: rgb(67, 147, 211);
+  color: #111;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgb(67, 147, 211);
+  transition: transform 0.2s ease;
+}
+
+.shimmer-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -75%; }
+  100% { left: 125%; }
+}
+
+.shimmer-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgb(67, 147, 211), 0 0 80px rgb(67, 147, 211);
+}
+
+
+
 /*# sourceMappingURL=custom.css.map */

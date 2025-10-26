@@ -8,9 +8,9 @@
             <p><strong>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</strong></p>
 
             <form method="POST" action="/login">
-                <input type="text" name="username" placeholder="Enter your name" required>
+                <input type="text" class="form-control mb-4" id=userName placeholder="Enter your name" required>
                 <!--input type="submit" value="Login-->
-                <a id="loginBtn" class="btn btn-primary btn-lg" href="{{ url_for('index') }}">Login</a>
+                <a id="loginBtn" class="btn btn-primary btn-lg shimmer-button" href="{{ url_for('index') }}">Login</a>
             </form>
             </div>
     {% endblock %}
