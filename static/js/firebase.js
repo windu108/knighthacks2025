@@ -105,6 +105,24 @@ onValue(entriesRef, (snapshot) => {
 
     });
 
+    const entries = [];
+    snapshot.forEach(child => entries.push(child.val()));
+
+    fetch("/receive-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log("Response from Python:", data);
+      // You could update your HTML page with results here
+      document.getElementById("serverResponse").textContent =
+        `Average budget: ${data.average_budget}`;
+    })
+    .catch(error => console.error("Error sending to Flask:", error));
+    
+
 
     const combinedBudgetString = combinedBudget !== null ? combinedBudget : "No data";
     const mutualAvailabilityString = mutualAvailability.length
