@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+</head>
+
+<body>
+    <h1>Welcome, {{ session['username'] }}!</h1>
+
+    <form method="POST" action="/logout">
+        <input type="submit" value="Logout">
+    </form>
+
+    <hr>
+
+    <h2>Suggest a New Activity</h2>
+    <form method="POST" action="/add_activity">
+        <label for="activity_name">Activity Name:</label>
+        <input type="text" id="activity_name" name="activity_name" required>
+        <button type="submit">Suggest</button>
+    </form>
+
+    <hr>
+
+    <h2>Vote for an activity:</h2>
+
+    {% for activity in activities %}
+    <div style="margin-bottom: 10px;">
+
+        <span style="font-size: 1.2em;">
+            {{ activity.name }}
+        </span>
+
+        <form method="POST" action="/vote/{{ activity.id }}" style="display: inline-block; margin-left: 10px;">
+
+            <!-- --- THIS LOGIC IS NEW --- -->
+            <!-- Check if this activity's ID is in the user's 'voted_on' list -->
+            {% if activity.id in session.get('voted_on', []) %}
+            <!-- If yes, show a disabled button -->
+            <button type="submit" disabled>Voted!</button>
+            {% else %}
+            <!-- If no, show the normal vote button -->
+            <button type="submit">Vote</button>
+            {% endif %}
+            <!-- --- END OF NEW LOGIC --- -->
+
+        </form>
+    </div>
+    {% else %}
+    <p>No activities to vote on yet. Suggest one!</p>
+    {% endfor %}
+
+    <hr>
+
+    <p><a href="/index">View Results</a></p>
+
+</body>
+
+</html>
