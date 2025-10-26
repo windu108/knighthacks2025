@@ -79,9 +79,13 @@ onValue(entriesRef, (snapshot) => {
 
     let combinedBudget;
 
-    budgetResultText.innerHTML = "";
-    availabilityResultText.innerHTML = "";
-
+    if (budgetResultText) {
+        budgetResultText.innerHTML = "";
+    }
+    if (availabilityResultText) {
+        availabilityResultText.innerHTML = "";
+    }
+    
     let iterationOne = true;
     snapshot.forEach((child) => {
         const data = child.val();
@@ -113,22 +117,52 @@ onValue(entriesRef, (snapshot) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entries })
     })
-    .then(response => response.json())
-    .then(data => {
-      console.log("Response from Python:", data);
-      // You could update your HTML page with results here
-      document.getElementById("serverResponse").textContent =
-        `Average budget: ${data.average_budget}`;
-    })
-    .catch(error => console.error("Error sending to Flask:", error));
-    
+        .then(response => response.json())
+        .then(data => {
+            console.log("Response from Python:", data);
+            // You could update your HTML page with results here
+            // document.getElementById("serverResponse").textContent =
+            //     `Average budget: ${data.average_budget}`;
+        })
+        .catch(error => console.error("Error sending to Flask:", error));
+
 
 
     const combinedBudgetString = combinedBudget !== null ? combinedBudget : "No data";
     const mutualAvailabilityString = mutualAvailability.length
-    ? JSON.stringify(mutualAvailability, null, 2)
-    : "No mutual availability";
+        ? JSON.stringify(mutualAvailability, null, 2)
+        : "No mutual availability";
+    
+    if (budgetResultText) {
+        budgetResultText.innerHTML = combinedBudgetString;
+    }
+    if (availabilityResultText) {
+        availabilityResultText.innerHTML = mutualAvailabilityString;
+    }
+    
+    mutualAvailability.forEach(slot => {
+        let day = slot.day;
+        let time = slot.time;
 
-    budgetResultText.innerHTML = combinedBudgetString;
-    availabilityResultText.innerHTML = mutualAvailabilityString;
+        if (time.substring(1,2) === ' ') {
+            time = parseInt(time.substring(0,1));
+        }
+        else {
+            time = parseInt(time.substring(0,2));
+        }
+
+        console.log(day);
+        console.log(time);
+
+        const cell = document.getElementById(`${day}${time}`)
+        if (cell) {
+            cell.classList.add("selected");
+        }
+    })
 });
+
+function formatTime(hour) {
+    if (hour === 0) return "12:00 AM";
+    if (hour === 12) return "12:00 PM";
+    return (hour % 12) + ":00 " + (hour < 12 ? "AM" : "PM");
+}

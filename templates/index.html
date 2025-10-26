@@ -50,70 +50,62 @@
 
     <div class="row min-vh-50">
 
-        <div class="col-md-5 d-flex flex-column h-100">
-            <div class="mb-3">
-                <label for="locationInput" class="form-label">Location</label>
-                <input type="text" class="form-control" id="locationInput"
-                    placeholder="Enter your current location (e.g., Orlando)">
+            <div class="col-md-5 d-flex flex-column h-100">
+                <div class="mb-3">
+                    <label for="locationInput" class="form-label"><strong>Location</strong></label>
+                    <input type="text" class="form-control" id="locationInput"
+                        placeholder="Enter your current location (e.g., Orlando)">
+                </div>
+
+                <div class="mb-3">
+                    <label for="budgetInput" class="form-label"><strong>Budget</strong></label>
+                    <input type="text" class="form-control" id="budgetInput"
+                        placeholder="Enter your max budget (e.g., 50)">
+                </div>
+
+                <div class="mb-3" id="interestsContainer">
+                    <label for="interestsInput" class="form-label"><strong>Interests (Comma-separated list)</strong></label>
+                    <textarea class="form-control" id="interestsInput" rows="3"
+                        placeholder="e.g., Hiking, Skydiving, Themeparks, Great Food"></textarea>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label for="budgetInput" class="form-label">Budget</label>
-                <input type="text" class="form-control" id="budgetInput" placeholder="Enter your max budget (e.g., 50)">
-            </div>
-
-            <div class="mb-3" id="interestsContainer">
-                <label for="interestsInput" class="form-label">Interests (Comma-separated list)</label>
-                <textarea class="form-control" id="interestsInput" rows="3"
-                    placeholder="e.g., Hiking, Skydiving, Themeparks, Great Food"></textarea>
+            <div class="col-md-7">
+                <h4 class="text-center mb-1">Your Availability Schedule</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle" id="calendarTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Time</th>
+                                <th>Mon</th>
+                                <th>Tue</th>
+                                <th>Wed</th>
+                                <th>Thu</th>
+                                <th>Fri</th>
+                                <th>Sat</th>
+                                <th>Sun</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-
-        <div class="col-md-7">
-            <h3 class="text-center mb-3">Simple Availability Calendar</h3>
-            <div class="table-responsive">
-                <table class="table table-bordered text-center align-middle" id="calendarTable">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Time</th>
-                            <th>Mon</th>
-                            <th>Tue</th>
-                            <th>Wed</th>
-                            <th>Thu</th>
-                            <th>Fri</th>
-                            <th>Sat</th>
-                            <th>Sun</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
+        <div class="d-grid mt-4">
+            <a id="submitBtn" class="btn btn-primary btn-lg" href="{{ url_for('results') }}">Find Activity & Check Availability</a>
         </div>
     </div>
-    <div class="d-grid mt-4">
-        <a id="submitBtn" class="btn btn-primary btn-lg" href="{{ url_for('results') }}">Find Activity & Check
-            Availability</a>
-    </div>
-
-    <div class="mt-5 mb-5">
-        <div class="box output-box p-3 border rounded">
-            <h5>AI Recommendation:</h5>
-            <div id="outputText" class="mt-2 text-secondary">Waiting for input...</div>
-        </div>
-    </div>
-
-</div>
-<script>
-    //==============================================================
-    // SCRIPTS FOR DATA COLLECTION AND SUBMISSION TO PYTHON BACKEND
-    //==============================================================
-    // Get references to all necessary DOM elements
-    const submitBtn = document.getElementById('submitBtn');
-    const locationInput = document.getElementById('locationInput');
-    const budgetInput = document.getElementById('budgetInput');
-    const interestsInput = document.getElementById('interestsInput');
-    const outputText = document.getElementById('outputText');
+    <script>
+        //==============================================================
+        // SCRIPTS FOR DATA COLLECTION AND SUBMISSION TO PYTHON BACKEND
+        //==============================================================
+        // Get references to all necessary DOM elements
+        const submitBtn = document.getElementById('submitBtn');
+        const locationInput = document.getElementById('locationInput');
+        const budgetInput = document.getElementById('budgetInput');
+        const interestsInput = document.getElementById('interestsInput');
+        const outputText = document.getElementById('outputText');
 
 
 
@@ -211,16 +203,16 @@
         const startHour = 8; // 8 AM
         const endHour = 20; // 8 PM (24-hour format)
 
-        /**
-         * Converts 24-hour time to 12-hour format (e.g., 14 -> 2:00 PM)
-         * @param {number} hour - The hour in 24-hour format (0-23)
-         * @returns {string} The formatted time string
-         */
-        function formatTime(hour) {
-            if (hour === 0) return "12:00 AM";
-            if (hour === 12) return "12:00 PM";
-            return (hour % 12) + ":00 " + (hour < 12 ? "AM" : "PM");
-        }
+            /**
+             * Converts 24-hour time to 12-hour format (e.g., 14 -> 2:00 PM)
+             * @param {number} hour - The hour in 24-hour format (0-23)
+             * @returns {string} The formatted time string
+             */
+            function formatTime(hour) {
+                if (hour === 0) return "12 AM";
+                if (hour === 12) return "12 PM";
+                return (hour % 12) + ' ' + (hour < 12 ? "AM" : "PM");
+            }
 
         // Loop through each hour to generate table rows
         for (let hour = startHour; hour < endHour; hour++) {
@@ -234,18 +226,13 @@
             timeCell.classList.add('time-cell');
             row.appendChild(timeCell);
 
-            // 2. Day Cells (Mon-Sun)
-            for (let day = 0; day < 7; day++) {
-                const dayCell = document.createElement('td');
-                dayCell.classList.add('calendar-cell');
-                dayCell.dataset.time = timeSlot; // Data attribute for time
-                dayCell.dataset.dayIndex = day;  // Data attribute for day (0=Mon, 6=Sun)
-                dayCell.textContent = ' '; // Empty content, just for display/clicking
-
-                // Add click listener to toggle selection
-                dayCell.addEventListener('click', function () {
-                    this.classList.toggle('selected');
-                });
+                // 2. Day Cells (Mon-Sun)
+                for (let day = 0; day < 7; day++) {
+                    const dayCell = document.createElement('td');
+                    dayCell.classList.add('calendar-cell');
+                    dayCell.dataset.time = timeSlot; // Data attribute for time
+                    dayCell.dataset.dayIndex = day;  // Data attribute for day (0=Mon, 6=Sun)
+                    dayCell.textContent = ' '; // Empty content, just for display/clicking
 
                 row.appendChild(dayCell);
             }

@@ -11860,6 +11860,7 @@ textarea.form-control-lg {
   }
 }
 
+/*Added CSS elements*/
 .calendar-cell {
   cursor: pointer;
   transition: background-color 0.2s;
@@ -11873,5 +11874,19 @@ textarea.form-control-lg {
   background-color: #0d6efd; /* Bootstrap primary color */
   color: white;
 }
+
+#calendarTable {
+  table-layout: fixed; /* Forces equal column widths */
+  width: 100%;         /* Fill the container */
+}
+
+#calendarTable th,
+#calendarTable td {
+  width: 12.5%;       /* 8 columns → 100% / 8 */
+  text-align: center;
+  height: 40px;   /* or whatever height you want */
+  vertical-align: middle;
+}
+
 
 /*# sourceMappingURL=custom.css.map */
