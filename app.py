@@ -25,10 +25,15 @@ def node_modules(filename):
     return app.send_static_file(f'../node_modules/{filename}') 
 
 # Main page
-@app.route('/', methods=['GET'])
+@app.route('/calendar', methods=['GET'])
 def index():
     now = datetime.now()
     return render_template('index.html', date=now)
+
+@app.route('/')
+def login():
+    now = datetime.now()
+    return render_template('login.html', date=now)
 
 # Results page: display AI recommendation for last submitted data
 @app.route('/results', methods=['GET'])
