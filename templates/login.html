@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+    {% block title %}Group Activity Planner{% endblock %}
+    
+    {% block content %}
+        <h1>Welcome!</h1>
+        <p>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+
+        <form method="POST" action="/login">
+            <input type="text" name="username" placeholder="Enter your name" required>
+            <input type="submit" value="Login">
+        </form>
+    {% endblock %}
