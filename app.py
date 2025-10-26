@@ -15,7 +15,6 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 # for the API key, which is the secure, recommended method.
 try:
     # Client initialization reads the key securely from the system environment.
-    # The hardcoded key has been removed to maintain security best practices.
     client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
     print("Gemini Client Initialized Successfully.")
 except Exception as e:
@@ -68,7 +67,7 @@ def get_recommendation():
         # Interests are extracted from the list provided by the frontend.
         interests = data.get('interests', ['general activities'])[0] 
         availability = data.get('availability', [])
-        # NOTE: Availability is extracted but NOT used in the prompt as requested.
+        # NOTE: Availability is extracted but NOT used in the prompt as.
 
         # --- 3. Gemini System Instruction and Structured Output Schema ---
         
@@ -80,7 +79,7 @@ def get_recommendation():
         DO NOT include any text, markdown, or explanations outside the JSON object.
         """
         
-        # Define the schema for a single activity object. 
+        # Define the schema for each of the single activity objects. 
         activity_schema = types.Schema(
             type=types.Type.OBJECT,
             properties={
@@ -88,7 +87,6 @@ def get_recommendation():
                 "address": types.Schema(type=types.Type.STRING, description="The location or address of the activity."),
                 "cost_estimate": types.Schema(type=types.Type.STRING, description="A clear cost estimate that respects the user's max budget."),
                 "brief_description": types.Schema(type=types.Type.STRING, description="A single, very brief sentence summarizing the activity."),
-                # FIX: Removed the colon from "website_link:"
                 "website_link": types.Schema(type=types.Type.STRING, description="A valid, full URL (e.g., https://example.com) to a website for the user to learn more about the activity.")
             },  
             required=["activity_name", "address", "cost_estimate", "brief_description", "website_link"]
@@ -109,7 +107,6 @@ def get_recommendation():
         )
 
         # --- 4. User Prompt Assembly ---
-        # NOTE: Availability text is intentionally excluded from the prompt
         user_prompt = f"""
         **User Profile for Activity Recommendation:**
         - Location: {location}
@@ -125,6 +122,8 @@ def get_recommendation():
             system_instruction=system_instruction,
             response_mime_type="application/json", 
             response_schema=response_schema,
+            #temperature=0.3 -> tweak for faster but less accurate input
+            #max_output_tokens=600 -> tweak for longer responses
         )
         
         # Send the prompt and configuration to the Gemini model.
@@ -134,7 +133,7 @@ def get_recommendation():
             config=config,
         )
 
-        # 🎯 FIX 1: Print statement is now correctly AFTER the API call
+        # !Print statement: temporary
         print("Received AI Response:")
         print(response.text)
 
@@ -149,7 +148,7 @@ def get_recommendation():
             # Add a separator element before the list begins.
             formatted_recommendation += "<h4></h4>" 
             for i, activity in enumerate(recommendation_list):
-                # 🎯 FIX 2: Define the 'link' variable by extracting it from the current activity
+                # Define the 'link' variable by extracting it from the current activity
                 link = activity.get('website_link', '#') 
                 
                 # Format: Bold Title (h5), Cost/Address line (p.text-muted), Brief Description (p).
