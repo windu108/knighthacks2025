@@ -82,6 +82,7 @@ def vote(activity_id):
     return redirect(url_for('home'))
 
 @app.route('/results')
+# Shows results
 def results():
     if 'username' not in session:
         return redirect(url_for('index'))
