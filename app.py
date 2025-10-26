@@ -1,8 +1,4 @@
 import os
-<<<<<<< HEAD
-import json
-from flask import Flask, render_template, request, jsonify
-=======
 from flask import (
     Flask, 
     render_template, 
@@ -12,45 +8,11 @@ from flask import (
     redirect, 
     url_for
 )
->>>>>>> origin/feature/backEnd
 from datetime import datetime
+import json
 from google import genai
 from google.genai import types
 
-<<<<<<< HEAD
-# --- Flask and Gemini Configuration ---
-
-# Initialize the Flask application, setting up the path for static files (CSS, JS)
-app = Flask(__name__, static_folder='static', static_url_path='/static')
-
-# Initialize the Gemini client. 
-# This process automatically searches the environment variables (specifically GEMINI_API_KEY) 
-# for the API key, which is the secure, recommended method.
-try:
-    # Client initialization reads the key securely from the system environment.
-    client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
-    print("Gemini Client Initialized Successfully.")
-except Exception as e:
-    # If initialization fails (e.g., API key is missing or invalid), the error is logged, 
-    # and the 'client' variable is set to None to prevent API calls.
-    print(f"Error initializing Gemini client: {e}. Check your GEMINI_API_KEY environment variable.")
-    client = None
-
-# Route definition for serving static files located in the 'node_modules' directory.
-# This is often used for front-end libraries like Bootstrap or jQuery.
-@app.route('/node_modules/<path:filename>')
-def node_modules(filename):
-    return app.send_static_file(f'../node_modules/{filename}') 
-
-
-# Main route for the application. Handles the initial page load.
-@app.route('/', methods=['GET'])
-def index():
-    now = datetime.now()
-    # Renders the 'index.html' template file, which contains the user form and calendar, 
-    # ensuring the Flask application loads the correct file.
-    return render_template('index.html', date=now) 
-=======
 activities = []
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -130,11 +92,7 @@ def results():
     
     sorted_activities = sorted(activities, key=lambda x: x['votes'], reverse=True)
     return render_template('results.html', activities=sorted_activities)
->>>>>>> origin/feature/backEnd
 
-@app.route('/results')
-def results():
-    return render_template('results.html')
 
 
 # -------------------------------------------------------------------
