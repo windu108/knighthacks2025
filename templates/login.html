@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+    {% block title %}Group Activity Planner{% endblock %}
+    
+    {% block content %}
+        <div class="welcome-container">
+            <img src="{{ url_for('static', filename='images/MainLogo.png') }}" alt="Main Logo" class="logo" style="width:400px; height:auto">
+            <h1 class="mb-4">Welcome to ClickMeet</h1>
+            <p><strong>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</strong></p>
+
+            <form method="POST" action="/login">
+                <input type="text" class="form-control mb-4" id=userName placeholder="Enter your name" required>
+                <!--input type="submit" value="Login-->
+                <a id="loginBtn" class="btn btn-primary btn-lg shimmer-button" href="{{ url_for('index') }}">Login</a>
+            </form>
+            </div>
+    {% endblock %}
