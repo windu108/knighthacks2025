@@ -16,26 +16,30 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const entriesRef = ref(db, "entries");
 
-document.getElementById("submitBtn").addEventListener("click", () => {
-    const location = document.getElementById("locationInput").value;
+const submitBtn = document.getElementById("submitBtn");
+if (submitBtn) {
+    submitBtn.addEventListener("click", () => {
+        const location = document.getElementById("locationInput").value;
 
-    const budget = document.getElementById("budgetInput").value;
+        const budget = document.getElementById("budgetInput").value;
 
-    const interests = document.getElementById("interestsInput").value;
+        const interests = document.getElementById("interestsInput").value;
 
-    const availability = collectAvailability();
+        const availability = collectAvailability();
 
-    if (location.trim() !== "" && budget.trim() !== "" && interests.trim() !== "") {
-        const entry = { location, budget, interests, availability}
-        push(entriesRef, entry);
-        document.getElementById("locationInput").value = "";
-        document.getElementById("budgetInput").value = "";
-        document.getElementById("interestsInput").value = "";
-    }
-    else {
+        if (location.trim() !== "" && budget.trim() !== "" && interests.trim() !== "") {
+            const entry = { location, budget, interests, availability }
+            push(entriesRef, entry);
+            document.getElementById("locationInput").value = "";
+            document.getElementById("budgetInput").value = "";
+            document.getElementById("interestsInput").value = "";
+        }
+        else {
 
-    }
-});
+        }
+    });
+}
+
 
 /**
 * Gathers all selected time slots from the calendar table.
@@ -67,14 +71,46 @@ function collectAvailability() {
     return availability;
 }
 
-
-
 onValue(entriesRef, (snapshot) => {
-    const list = document.getElementById("messagesList");
-    list.innerHTML = "";
+    const budgetResultText = document.getElementById("budgetResult");
+    const availabilityResultText = document.getElementById("availabilityResult");
+
+    let mutualAvailability = [];
+
+    let combinedBudget;
+
+    budgetResultText.innerHTML = "";
+    availabilityResultText.innerHTML = "";
+
+    let iterationOne = true;
     snapshot.forEach((child) => {
-        const li = document.createElement("li");
-        li.textContent = child.val();
-        list.appendChild(li);
+        const data = child.val();
+
+        if (iterationOne) {
+            combinedBudget = data.budget;
+        }
+        else if (combinedBudget > parseInt(data.budget)) {
+            combinedBudget = parseInt(data.budget);
+        }
+
+        if (iterationOne) {
+            mutualAvailability = data.availability;
+        }
+        else {
+            mutualAvailability = mutualAvailability.filter(a =>
+                data.availability.some(b => JSON.stringify(a) === JSON.stringify(b))
+            );
+        }
+        iterationOne = false;
+
     });
+
+
+    const combinedBudgetString = combinedBudget !== null ? combinedBudget : "No data";
+    const mutualAvailabilityString = mutualAvailability.length
+    ? JSON.stringify(mutualAvailability, null, 2)
+    : "No mutual availability";
+
+    budgetResultText.innerHTML = combinedBudgetString;
+    availabilityResultText.innerHTML = mutualAvailabilityString;
 });
