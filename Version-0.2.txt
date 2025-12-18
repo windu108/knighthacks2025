@@ -2,6 +2,7 @@
 -Commented out data/time
 -Made AI generate results 50%-60% faster and now turns to next page instantly. Did this by reducing amount of calls to gemini and reorganizing code better
 -Turned off flask debug mode to reduce amount of AI calls
+-The phrase in tab is now consistantly 'ClickMeet'
 
 -KNOWN ISSUE: hitting refresh multiple times will cause an error of exceding maximum amount of Gemini calls in a minute
 -Further testing needed to ensure rest of code works as expected
