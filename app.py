@@ -10,7 +10,7 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Initialize the Gemini client
 try:
-    client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
+    client = genai.Client(api_key='') #enter api key here
     print("Gemini Client Initialized Successfully.")
 except Exception as e:
     print(f"Error initializing Gemini client: {e}")
