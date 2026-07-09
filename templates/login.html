@@ -1,16 +1,32 @@
 {% extends "base.html" %}
-    {% block title %}Group Activity Planner{% endblock %}
-    
-    {% block content %}
-        <div class="welcome-container">
-            <img src="{{ url_for('static', filename='images/MainLogo.png') }}" alt="Main Logo" class="logo" style="width:400px; height:auto">
-            <h1 class="mb-4">Welcome to ClickMeet</h1>
-            <p><strong>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</strong></p>
+{% block title %}Group Activity Planner{% endblock %}
 
-            <form method="POST" action="/login">
-                <input type="text" class="form-control mb-4" id=userName placeholder="Enter your name" required>
-                <!--input type="submit" value="Login-->
-                <a id="loginBtn" class="btn btn-primary btn-lg shimmer-button" href="{{ url_for('index') }}">Login</a>
-            </form>
-            </div>
-    {% endblock %}
+{% block content %}
+<div class="welcome-container">
+    <img src="{{ url_for('static', filename='images/MainLogo.png') }}" alt="Main Logo" class="logo"
+        style="width:400px; height:auto">
+    <h1 class="mb-4">Welcome to ClickMeet</h1>
+    <!-- this is the time/date code? Not sure if it's needed?-->
+    <!--<p><strong>Current date/time: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</strong></p> -->
+
+    <form method="POST" action="/login">
+        <input type="text" class="form-control mb-4" id=userName placeholder="Enter your name" required>
+        <!--input type="submit" value="Login-->
+        <a id="loginBtn" class="btn btn-primary btn-lg shimmer-button" href="{{ url_for('index') }}">Login</a>
+    </form>
+    <!--Added version number to keep track of editions-->
+    <p class="version">Version 0.2</p>
+</div>
+
+<!-- TODO: move to css-->
+<style>
+    .version {
+        position: absolute;
+        bottom: 0px;
+        right: 15px;
+        font-size: 0.9rem;
+    }
+</style>
+
+
+{% endblock %}

@@ -10,7 +10,7 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Initialize the Gemini client
 try:
-    client = genai.Client(api_key='AIzaSyDd2K0Jwjs6X_c3JyGz6Q87ZQpcschQNSo')
+    client = genai.Client(api_key='') #enter api key here
     print("Gemini Client Initialized Successfully.")
 except Exception as e:
     print(f"Error initializing Gemini client: {e}")
@@ -18,6 +18,7 @@ except Exception as e:
 
 # Keep last submitted entries in memory for /results
 last_entries = []
+last_ai_html = None
 
 # Route to serve node_modules if needed
 @app.route('/node_modules/<path:filename>')
@@ -38,16 +39,16 @@ def login():
 # Results page: display AI recommendation for last submitted data
 @app.route('/results', methods=['GET'])
 def results():
-    if not last_entries:
-        return render_template('results.html', ai_recommendation="No data submitted yet.")
+    if not last_ai_html:
+        return render_template('results.html', ai_recommendation="No AI recommendation submitted yet.")
     
-    ai_html = get_recommendation(last_entries)
-    return render_template('results.html', ai_recommendation=ai_html)
+    return render_template('results.html', ai_recommendation=last_ai_html)
 
 # Receive data from frontend (Firebase)
 @app.route('/receive-data', methods=['POST'])
 def receive_data():
-    global last_entries
+    global last_entries, last_ai_html
+    
     data = request.get_json()
     entries = data["entries"]
     for entry in entries:
@@ -55,12 +56,12 @@ def receive_data():
     last_entries = entries  # store for /results
 
     # Generate AI recommendation and print it
-    ai_html = get_recommendation(entries)
+    last_ai_html = get_recommendation(entries)
     
     return jsonify({
         "message": "Data received successfully",
         "entries_received": len(entries),
-        "ai_html": ai_html
+        "ai_html": last_ai_html
     })
 
 # --- Gemini logic ---
@@ -164,4 +165,4 @@ def get_recommendation(data):
 
 # Run Flask
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=False, port=8080)
